@@ -31,6 +31,11 @@ const gestureMappingSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+
+
+
+
+
 export default mongoose.model(
   "GestureMapping",
   gestureMappingSchema

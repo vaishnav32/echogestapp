@@ -13,6 +13,12 @@ export function updateHeartbeat(controllerId, battery = null) {
   });
 }
 
+
+
+
+
+
+
 // Used by GET /api/controllers
 export function getControllers() {
   const now = Date.now();
