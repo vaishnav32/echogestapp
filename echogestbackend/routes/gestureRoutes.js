@@ -1,14 +1,16 @@
 import express from "express";
 import Gesture from "../models/Gesture.js";
+import GestureMapping from "../models/GestureMapping.js";
 
 const router = express.Router();
 
-/* --------------------------------------------------
-   POST: Receive gesture from Raspberry Pi wearable
----------------------------------------------------*/
+/* =========================================================
+   POST /api/gestures
+   Trigger gesture (from Raspberry Pi)
+========================================================= */
 router.post("/", async (req, res) => {
   try {
-    const { controllerId, gesture, confidence, source } = req.body;
+    const { controllerId, gesture, confidence } = req.body;
 
     if (!controllerId || !gesture) {
       return res.status(400).json({
@@ -16,55 +18,58 @@ router.post("/", async (req, res) => {
       });
     }
 
-    const newGesture = new Gesture({
+    // 1️⃣ Save gesture event
+    const event = new Gesture({
       controllerId,
       gesture,
       confidence,
-      source,
-      timestamp: new Date(),
     });
 
-    await newGesture.save();
+    await event.save();
 
-    res.status(201).json({
-      message: "Gesture saved successfully",
+    // 2️⃣ Find mapping
+    const mapping = await GestureMapping.findOne({
+      controllerId,
+      gesture,
+    });
+
+    // 3️⃣ If mapped → decide action
+    if (mapping) {
+      return res.json({
+        message: "Gesture mapped",
+        action: {
+          deviceId: mapping.deviceId,
+          appliance: mapping.appliance,
+          action: mapping.action,
+        },
+      });
+    }
+
+    // 4️⃣ No mapping
+    res.json({
+      message: "Gesture received, no mapping found",
     });
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+    res.status(500).json({ message: error.message });
   }
 });
 
-/* --------------------------------------------------
-   GET: Fetch gestures by controllerId
-   Supports optional date-time filtering
----------------------------------------------------*/
+/* =========================================================
+   GET /api/gestures/:controllerId
+========================================================= */
 router.get("/:controllerId", async (req, res) => {
   try {
-    const { controllerId } = req.params;
-    const { from, to } = req.query;
-
-    const query = { controllerId };
-
-    // Optional date filtering
-    if (from || to) {
-      query.timestamp = {};
-      if (from) query.timestamp.$gte = new Date(from);
-      if (to) query.timestamp.$lte = new Date(to);
-    }
-
-    const gestures = await Gesture.find(query)
-      .sort({ timestamp: -1 })
-      .limit(50);
+    const gestures = await Gesture.find({
+      controllerId: req.params.controllerId,
+    }).sort({ createdAt: -1 });
 
     res.json(gestures);
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+    res.status(500).json({ message: error.message });
   }
 });
 
 export default router;
+
+
 
