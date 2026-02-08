@@ -1,23 +1,31 @@
 import mongoose from "mongoose";
 
-const deviceCommandSchema = new mongoose.Schema({
-  deviceId: {
-    type: String,
-    required: true,
+const deviceCommandSchema = new mongoose.Schema(
+  {
+    controllerId: {
+      type: String,
+      required: true,
+    },
+    deviceId: {
+      type: String,
+      required: true,
+    },
+    appliance: {
+      type: String,
+      required: true,
+    },
+    action: {
+      type: String,
+      required: true,
+    },
+    executed: {
+      type: Boolean,
+      default: false,
+    },
   },
-  appliance: {
-    type: String,
-    required: true,
-  },
-  action: {
-    type: String,
-    required: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  { timestamps: true }
+);
 
 export default mongoose.model("DeviceCommand", deviceCommandSchema);
+
 

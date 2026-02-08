@@ -3,41 +3,34 @@ import DeviceCommand from "../models/DeviceCommand.js";
 
 const router = express.Router();
 
-/* =========================================
+/* ======================================================
    GET /api/devices/commands/:deviceId
-   ESP32 polling endpoint
-========================================= */
+   ESP32 polls for next command
+====================================================== */
 router.get("/commands/:deviceId", async (req, res) => {
-  const { deviceId } = req.params;
+  try {
+    const { deviceId } = req.params;
 
-  // Get oldest command and DELETE it (one-time execution)
-  const command = await DeviceCommand.findOneAndDelete(
-    { deviceId },
-    { sort: { createdAt: 1 } }
-  );
+    const command = await DeviceCommand.findOne({
+      deviceId,
+      executed: false,
+    }).sort({ createdAt: 1 });
 
-  res.status(200).json({
-    command: command
-      ? {
-          appliance: command.appliance,
-          action: command.action,
-        }
-      : null,
-  });
-});
+    if (!command) {
+      return res.json({ command: null });
+    }
 
-/* =========================================
-   POST /api/devices/ack
-   ESP32 acknowledgment (optional)
-========================================= */
-router.post("/ack", (req, res) => {
-  const { deviceId, appliance, status } = req.body;
+    // Mark as executed
+    command.executed = true;
+    await command.save();
 
-  console.log(
-    `ESP32 ${deviceId} executed ${appliance} -> ${status}`
-  );
-
-  res.json({ message: "ACK received" });
+    res.json({
+      appliance: command.appliance,
+      action: command.action,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 export default router;
