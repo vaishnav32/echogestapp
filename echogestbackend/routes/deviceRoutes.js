@@ -3,36 +3,48 @@ import DeviceCommand from "../models/DeviceCommand.js";
 
 const router = express.Router();
 
-/* ======================================================
+/* =====================================================
    GET /api/devices/commands/:deviceId
-   ESP32 polls for next command
-====================================================== */
+   ESP32 polling endpoint
+===================================================== */
 router.get("/commands/:deviceId", async (req, res) => {
   try {
     const { deviceId } = req.params;
 
-    const command = await DeviceCommand.findOne({
-      deviceId,
-      executed: false,
-    }).sort({ createdAt: 1 });
-
-    if (!command) {
-      return res.json({ command: null });
+    // ✅ ONLY validate deviceId
+    if (!deviceId) {
+      return res.status(400).json({
+        message: "deviceId is required",
+      });
     }
 
-    // Mark as executed
-    command.executed = true;
-    await command.save();
+    // ✅ Fetch latest command
+    const command = await DeviceCommand.findOne({ deviceId })
+      .sort({ createdAt: -1 });
 
+    // ✅ IMPORTANT: return null if no command
+    if (!command) {
+      return res.json({
+        command: null,
+      });
+    }
+
+    // ✅ Return command
     res.json({
-      appliance: command.appliance,
-      action: command.action,
+      command: {
+        appliance: command.appliance,
+        action: command.action,
+      },
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({
+      message: "Internal server error",
+    });
   }
 });
 
 export default router;
+
 
 
