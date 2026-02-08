@@ -5,10 +5,10 @@ import DeviceCommand from "../models/DeviceCommand.js";
 
 const router = express.Router();
 
-/* ======================================================
+/* =====================================================
    POST /api/gestures
-   Raspberry Pi sends recognized gesture
-====================================================== */
+   Raspberry Pi sends detected gesture
+===================================================== */
 router.post("/", async (req, res) => {
   try {
     const { controllerId, gesture, confidence, source } = req.body;
@@ -19,53 +19,54 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // 1️⃣ Store gesture event
-    const gestureEvent = await Gesture.create({
+    // Save gesture log
+    await Gesture.create({
       controllerId,
       gesture,
-      confidence,
-      source,
+      confidence:
+        typeof confidence === "number" ? confidence : null,
+      source: source || "unknown",
       timestamp: new Date(),
     });
 
-    // 2️⃣ Find mapping for this gesture + controller
+    // Find mapping
     const mapping = await GestureMapping.findOne({
       controllerId,
       gesture,
     });
 
-    // 3️⃣ If mapping exists → create device command
-    if (mapping) {
-      await DeviceCommand.create({
-        controllerId,                 // ✅ FIX (THIS WAS MISSING)
-        deviceId: mapping.deviceId,
-        appliance: mapping.appliance,
-        action: mapping.action,
-      });
-
+    if (!mapping) {
       return res.json({
-        message: "Gesture mapped and command queued",
-        command: {
-          controllerId,
-          deviceId: mapping.deviceId,
-          appliance: mapping.appliance,
-          action: mapping.action,
-        },
+        message: "Gesture stored, but no mapping found",
       });
     }
 
-    // 4️⃣ No mapping → gesture logged only
+    // Create command (ACK enabled)
+    await DeviceCommand.create({
+      controllerId,
+      deviceId: mapping.deviceId,
+      appliance: mapping.appliance,
+      action: mapping.action,
+    });
+
     res.json({
-      message: "Gesture received (no mapping found)",
-      gesture: gestureEvent,
+      message: "Gesture mapped and command queued",
+      action: {
+        deviceId: mapping.deviceId,
+        appliance: mapping.appliance,
+        action: mapping.action,
+      },
     });
   } catch (error) {
-    console.error("Gesture error:", error);
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({
+      message: "Internal server error",
+    });
   }
 });
 
 export default router;
+
 
 
 

@@ -22,10 +22,16 @@ const deviceCommandSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    executedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
 
 export default mongoose.model("DeviceCommand", deviceCommandSchema);
+
+
 
 
