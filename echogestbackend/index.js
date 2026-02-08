@@ -2,48 +2,75 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 
-/* -------- Route imports -------- */
 import controllerRoutes from "./routes/controllerRoutes.js";
 import gestureRoutes from "./routes/gestureRoutes.js";
 import audioRoutes from "./routes/audioRoutes.js";
 import gestureMappingRoutes from "./routes/gestureMappingRoutes.js";
+import deviceRoutes from "./routes/deviceRoutes.js";
 
-/* -------- App setup -------- */
+/* ======================================================
+   App Init
+====================================================== */
+
 const app = express();
-const PORT = 5000;
 
-/* -------- Middleware -------- */
+/* ======================================================
+   Middleware
+====================================================== */
+
 app.use(cors());
 app.use(express.json());
 
-/* -------- MongoDB connection -------- */
-mongoose
-  .connect(
-    "mongodb+srv://echogest:echogestPI5@cluster0.sjdebtx.mongodb.net/echogest?appName=Cluster0"
-  )
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB error:", err));
+/* ======================================================
+   MongoDB Connection
+====================================================== */
 
-/* -------- Routes -------- */
-/*
-  NOTE:
-  - Heartbeat is handled INSIDE controllerRoutes
-  - index.js does NOT know about controllersHeartbeat.js
-*/
+const MONGO_URI =
+  process.env.MONGO_URI ||
+  "mongodb+srv://echogest:echogestPI5@cluster0.sjdebtx.mongodb.net/echogest";
+
+mongoose
+  .connect(MONGO_URI)
+  .then(() => {
+    console.log("✅ MongoDB connected");
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err);
+  });
+
+/* ======================================================
+   Routes
+====================================================== */
+
+app.get("/", (req, res) => {
+  res.send("EchoGest backend running");
+});
+
+// Controllers + heartbeat
 app.use("/api/controllers", controllerRoutes);
+
+// Gesture logs + trigger logic
 app.use("/api/gestures", gestureRoutes);
+
+// Audio logs
 app.use("/api/audio", audioRoutes);
+
+// Gesture → appliance mappings
 app.use("/api/gesture-mappings", gestureMappingRoutes);
 
-/* -------- Health check -------- */
-app.get("/", (req, res) => {
-  res.send("EchoGest Backend Running 🚀");
+// ESP32 command polling + ACK
+app.use("/api/devices", deviceRoutes);
+
+/* ======================================================
+   Server Start
+====================================================== */
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
 
-/* -------- Start server -------- */
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
 
 
 

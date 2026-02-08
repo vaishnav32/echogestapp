@@ -2,85 +2,122 @@ import {
   Card,
   CardContent,
   Typography,
-  Switch,
-  Grid,
+  Button,
   Stack,
+  Divider,
 } from "@mui/material";
-import ElectricalServicesIcon from "@mui/icons-material/ElectricalServices";
-import { useState } from "react";
+import PowerSettingsNewIcon from "@mui/icons-material/PowerSettingsNew";
+import axios from "axios";
 
-const dummyDevices = [
-  { id: 1, name: "Living Room Light", status: true },
-  { id: 2, name: "Ceiling Fan", status: false },
-  { id: 3, name: "TV Socket", status: false },
-];
+/* =========================================
+   CONFIG
+========================================= */
+
+const API_BASE = "https://echogestapp.onrender.com";
+const DEVICE_ID = "ESP-01"; // single ESP32 for demo
+
+/* =========================================
+   COMPONENT
+========================================= */
 
 function DeviceCard({ onNotify }) {
-  const [devices, setDevices] = useState(dummyDevices);
+  const sendCommand = async (appliance, action) => {
+    try {
+      await axios.post(`${API_BASE}/api/devices/ack`, {
+        deviceId: DEVICE_ID,
+        appliance,
+        status: action,
+      });
 
-  const toggleDevice = (id) => {
-    setDevices((prev) =>
-      prev.map((device) => {
-        if (device.id === id) {
-          const newStatus = !device.status;
-          onNotify?.(
-            `${device.name} turned ${newStatus ? "ON" : "OFF"}`
-          );
-          return { ...device, status: newStatus };
-        }
-        return device;
-      })
-    );
+      if (onNotify) {
+        onNotify(`${appliance} ${action} command sent`);
+      }
+    } catch (error) {
+      console.error("Command failed:", error);
+      if (onNotify) {
+        onNotify("Failed to send command");
+      }
+    }
   };
 
   return (
-    <Grid container spacing={3}>
-      {devices.map((device) => (
-        <Grid item xs={12} md={4} key={device.id}>
-          <Card
-            elevation={3}
-            sx={{
-              height: "100%",
-              transition: "0.2s",
-              "&:hover": {
-                transform: "translateY(-2px)",
-                boxShadow: 6,
-              },
-            }}
+    <Card elevation={3}>
+      <CardContent>
+        <Typography variant="h6" fontWeight={600} gutterBottom>
+          Device Control (Manual)
+        </Typography>
+
+        <Typography variant="body2" color="text.secondary" gutterBottom>
+          Manual override controls. Commands are sent to the backend and
+          executed by ESP32 when available.
+        </Typography>
+
+        <Divider sx={{ my: 2 }} />
+
+        {/* LIGHT */}
+        <Typography variant="subtitle1" fontWeight={500}>
+          Light
+        </Typography>
+        <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+          <Button
+            variant="contained"
+            startIcon={<PowerSettingsNewIcon />}
+            onClick={() => sendCommand("Light", "ON")}
           >
-            <CardContent>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <ElectricalServicesIcon color="action" />
-                <Typography variant="h6">
-                  {device.name}
-                </Typography>
-              </Stack>
+            ON
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => sendCommand("Light", "OFF")}
+          >
+            OFF
+          </Button>
+        </Stack>
 
-              <Switch
-                checked={device.status}
-                onChange={() => toggleDevice(device.id)}
-                sx={{ mt: 1 }}
-              />
+        {/* FAN */}
+        <Typography variant="subtitle1" fontWeight={500}>
+          Fan
+        </Typography>
+        <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+          <Button
+            variant="contained"
+            startIcon={<PowerSettingsNewIcon />}
+            onClick={() => sendCommand("Fan", "ON")}
+          >
+            ON
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => sendCommand("Fan", "OFF")}
+          >
+            OFF
+          </Button>
+        </Stack>
 
-              <Typography
-                variant="body2"
-                sx={{
-                  mt: 1,
-                  fontWeight: 600,
-                  color: device.status
-                    ? "success.main"
-                    : "error.main",
-                }}
-              >
-                Status: {device.status ? "ON" : "OFF"}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      ))}
-    </Grid>
+        {/* AC */}
+        <Typography variant="subtitle1" fontWeight={500}>
+          AC
+        </Typography>
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="contained"
+            startIcon={<PowerSettingsNewIcon />}
+            onClick={() => sendCommand("AC", "ON")}
+          >
+            ON
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => sendCommand("AC", "OFF")}
+          >
+            OFF
+          </Button>
+        </Stack>
+      </CardContent>
+    </Card>
   );
 }
 
 export default DeviceCard;
+
 
