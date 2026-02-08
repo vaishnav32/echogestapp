@@ -45,7 +45,7 @@ function GestureTable() {
     try {
       setLoading(true);
 
-      let url = `http://localhost:5000/api/gestures/${controllerId}`;
+      let url = `https://echogestapp.onrender.com/api/gestures/${controllerId}`;
 
       const params = [];
       if (fromDate) params.push(`from=${fromDate}`);

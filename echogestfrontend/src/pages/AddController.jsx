@@ -44,7 +44,7 @@ function AddController() {
         const id = generateControllerId();
 
         try {
-          await axios.post("http://localhost:5000/api/controllers", {
+          await axios.post("https://echogestapp.onrender.com/api/controllers", {
             controllerId: id,
             name,
             location,

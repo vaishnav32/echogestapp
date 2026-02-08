@@ -72,7 +72,7 @@ function Dashboard() {
     const fetchData = async () => {
       try {
         const ctrlRes = await axios.get(
-          "http://localhost:5000/api/controllers"
+          "https://echogestapp.onrender.com/api/controllers"
         );
 
         const found = ctrlRes.data.find(
@@ -84,10 +84,10 @@ function Dashboard() {
 
         const [gestureRes, audioRes] = await Promise.all([
           axios.get(
-            `http://localhost:5000/api/gestures/${controllerId}?from=${today}`
+            `https://echogestapp.onrender.com/api/gestures/${controllerId}?from=${today}`
           ),
           axios.get(
-            `http://localhost:5000/api/audio/${controllerId}?from=${today}`
+            `https://echogestapp.onrender.com/api/audio/${controllerId}?from=${today}`
           ),
         ]);
 

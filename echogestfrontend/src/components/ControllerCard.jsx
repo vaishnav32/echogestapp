@@ -32,7 +32,7 @@ function ControllerCard({
     setDeleting(true);
     try {
       await axios.delete(
-        `http://localhost:5000/api/controllers/${controllerId}`
+        `https://echogestapp.onrender.com/api/controllers/${controllerId}`
       );
       window.location.reload(); // simple refresh
     } catch (err) {

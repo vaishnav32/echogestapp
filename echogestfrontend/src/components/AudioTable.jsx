@@ -35,7 +35,7 @@ function AudioTable() {
     try {
       setLoading(true);
 
-      let url = `http://localhost:5000/api/audio/${controllerId}`;
+      let url = `https://echogestapp.onrender.com/api/audio/${controllerId}`;
 
       const params = [];
       if (fromDate) params.push(`from=${fromDate}`);

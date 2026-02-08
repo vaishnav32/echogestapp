@@ -19,36 +19,19 @@ function Controllers() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const fetchControllers = async () => {
+    try {
+      const res = await axios.get("https://echogestapp.onrender.com/api/controllers");
+      setControllers(res.data);
+    } catch (err) {
+      console.error("Failed to fetch controllers", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchControllers = async () => {
-      try {
-        const res = await axios.get(
-          "http://localhost:5000/api/controllers"
-        );
-
-        // Map backend data → UI-friendly shape
-        const formatted = res.data.map((ctrl) => ({
-          controllerId: ctrl.controllerId,
-          name: "My Home",          // placeholder (can be customized later)
-          location: "Living Room",  // placeholder
-          status: ctrl.status,
-          battery: ctrl.battery,
-        }));
-
-        setControllers(formatted);
-      } catch (err) {
-        console.error("Failed to fetch controllers", err);
-        setControllers([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchControllers();
-
-    // auto-refresh every 10 seconds
-    const interval = setInterval(fetchControllers, 10000);
-    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -105,6 +88,7 @@ function Controllers() {
 }
 
 export default Controllers;
+
 
 
 

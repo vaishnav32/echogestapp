@@ -36,7 +36,7 @@ function GestureMapping() {
 
   const fetchMappings = async () => {
     const res = await axios.get(
-      `http://localhost:5000/api/gesture-mappings/${controllerId}`
+      `https://echogestapp.onrender.com/api/gesture-mappings/${controllerId}`
     );
     setMappings(res.data);
   };
@@ -47,7 +47,7 @@ function GestureMapping() {
 
   const addMapping = async () => {
     await axios.post(
-      "http://localhost:5000/api/gesture-mappings",
+      "https://echogestapp.onrender.com/api/gesture-mappings",
       {
         controllerId,
         gesture,
@@ -66,7 +66,7 @@ function GestureMapping() {
 
   const deleteMapping = async (id) => {
     await axios.delete(
-      `http://localhost:5000/api/gesture-mappings/${id}`
+      `https://echogestapp.onrender.com/api/gesture-mappings/${id}`
     );
     fetchMappings();
   };
