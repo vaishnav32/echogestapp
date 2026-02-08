@@ -21,7 +21,13 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 
-const GESTURES = ["FIST", "OPEN_HAND", "SWIPE_LEFT", "SWIPE_RIGHT"];
+const GESTURES = [
+  "FIST",
+  "INDEX",
+  "VICTORY",
+  "THUMBS_UP",
+  "OPEN_HAND",
+];
 const APPLIANCES = ["Light", "Fan", "AC"];
 const DEVICE_ID = "ESP-01"; // placeholder
 

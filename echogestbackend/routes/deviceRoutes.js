@@ -3,24 +3,44 @@ import { getCommand } from "../commandQueue.js";
 
 const router = express.Router();
 
-/* =====================================================
-   ESP32 polls for command
-   GET /api/devices/commands/:deviceId
-===================================================== */
+/* =========================================
+   ESP32 polls for commands
+========================================= */
 router.get("/commands/:deviceId", (req, res) => {
   const { deviceId } = req.params;
+
+  if (!deviceId) {
+    return res.status(400).json({
+      message: "deviceId is required",
+    });
+  }
+
   const command = getCommand(deviceId);
-  res.json({ command });
+
+  // ✅ ALWAYS return 200
+  res.status(200).json({
+    command: command || null,
+  });
 });
 
-/* =====================================================
-   ESP32 sends ACK
-   POST /api/devices/ack
-===================================================== */
+/* =========================================
+   ESP32 ACK
+========================================= */
 router.post("/ack", (req, res) => {
   const { deviceId, appliance, status } = req.body;
-  console.log(`ESP32 ${deviceId} executed ${appliance} → ${status}`);
+
+  if (!deviceId) {
+    return res.status(400).json({
+      message: "deviceId is required",
+    });
+  }
+
+  console.log(
+    `ESP32 ${deviceId} executed ${appliance} -> ${status}`
+  );
+
   res.json({ message: "ACK received" });
 });
 
 export default router;
+
