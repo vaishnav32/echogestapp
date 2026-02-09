@@ -7,7 +7,6 @@ const router = express.Router();
 
 /* =====================================================
    POST /api/gestures
-   Raspberry Pi sends detected gesture
 ===================================================== */
 router.post("/", async (req, res) => {
   try {
@@ -19,7 +18,7 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // 1️⃣ Save gesture log
+    // Save gesture
     await Gesture.create({
       controllerId,
       gesture,
@@ -29,7 +28,7 @@ router.post("/", async (req, res) => {
       timestamp: new Date(),
     });
 
-    // 2️⃣ Find gesture mapping
+    // Find mapping
     const mapping = await GestureMapping.findOne({
       controllerId,
       gesture,
@@ -41,7 +40,7 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // 3️⃣ Create device command (ACK-enabled)
+    // Create command
     await DeviceCommand.create({
       controllerId,
       deviceId: mapping.deviceId,
@@ -57,15 +56,15 @@ router.post("/", async (req, res) => {
         action: mapping.action,
       },
     });
-  } catch (error) {
-    console.error("GESTURE POST ERROR:", error);
+  } catch (err) {
+    console.error("GESTURE POST ERROR:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
 /* =====================================================
    GET /api/gestures/:controllerId
-   Fetch gesture logs (with optional date filters)
+   (WITH DATE FILTER SUPPORT)
 ===================================================== */
 router.get("/:controllerId", async (req, res) => {
   try {
@@ -85,8 +84,8 @@ router.get("/:controllerId", async (req, res) => {
     });
 
     res.json(gestures);
-  } catch (error) {
-    console.error("GESTURE GET ERROR:", error);
+  } catch (err) {
+    console.error("GESTURE GET ERROR:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 });

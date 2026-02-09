@@ -15,7 +15,6 @@ import PanToolIcon from "@mui/icons-material/PanTool";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-
 import EmptyState from "./EmptyState";
 
 const INITIAL_LIMIT = 5;
@@ -46,8 +45,8 @@ function GestureTable() {
       );
 
       setGestures(res.data);
-    } catch (error) {
-      console.error("Gesture fetch failed:", error);
+    } catch (err) {
+      console.error("Gesture fetch failed:", err);
     } finally {
       setLoading(false);
     }
@@ -71,7 +70,6 @@ function GestureTable() {
           setToDate={setToDate}
           onApply={fetchGestures}
         />
-
         <EmptyState
           icon={<PanToolIcon sx={{ fontSize: 40 }} />}
           title="No gesture logs"
@@ -104,7 +102,6 @@ function GestureTable() {
               <TableCell align="right"><strong>Time</strong></TableCell>
             </TableRow>
           </TableHead>
-
           <TableBody>
             {visibleGestures.map((g) => (
               <TableRow key={g._id} hover>
@@ -144,7 +141,11 @@ function FilterBar({
   onApply,
 }) {
   return (
-    <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 2 }}>
+    <Stack
+      direction={{ xs: "column", sm: "row" }}
+      spacing={2}
+      sx={{ mb: 2 }}
+    >
       <TextField
         label="From"
         type="datetime-local"
@@ -153,7 +154,6 @@ function FilterBar({
         InputLabelProps={{ shrink: true }}
         size="small"
       />
-
       <TextField
         label="To"
         type="datetime-local"
@@ -162,7 +162,6 @@ function FilterBar({
         InputLabelProps={{ shrink: true }}
         size="small"
       />
-
       <Button variant="outlined" onClick={onApply}>
         Apply
       </Button>
@@ -171,6 +170,7 @@ function FilterBar({
 }
 
 export default GestureTable;
+
 
 
 
