@@ -19,7 +19,7 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Save gesture log
+    // 1️⃣ Save gesture log
     await Gesture.create({
       controllerId,
       gesture,
@@ -29,7 +29,7 @@ router.post("/", async (req, res) => {
       timestamp: new Date(),
     });
 
-    // Find mapping
+    // 2️⃣ Find gesture mapping
     const mapping = await GestureMapping.findOne({
       controllerId,
       gesture,
@@ -41,7 +41,7 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Create command (ACK enabled)
+    // 3️⃣ Create device command (ACK-enabled)
     await DeviceCommand.create({
       controllerId,
       deviceId: mapping.deviceId,
@@ -58,14 +58,41 @@ router.post("/", async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Internal server error",
+    console.error("GESTURE POST ERROR:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+/* =====================================================
+   GET /api/gestures/:controllerId
+   Fetch gesture logs (with optional date filters)
+===================================================== */
+router.get("/:controllerId", async (req, res) => {
+  try {
+    const { controllerId } = req.params;
+    const { from, to } = req.query;
+
+    const query = { controllerId };
+
+    if (from || to) {
+      query.timestamp = {};
+      if (from) query.timestamp.$gte = new Date(from);
+      if (to) query.timestamp.$lte = new Date(to);
+    }
+
+    const gestures = await Gesture.find(query).sort({
+      timestamp: -1,
     });
+
+    res.json(gestures);
+  } catch (error) {
+    console.error("GESTURE GET ERROR:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
 export default router;
+
 
 
 

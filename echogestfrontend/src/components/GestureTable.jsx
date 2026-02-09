@@ -10,8 +10,6 @@ import {
   Box,
   TextField,
   Stack,
-  LinearProgress,
-  Typography,
 } from "@mui/material";
 import PanToolIcon from "@mui/icons-material/PanTool";
 import { useEffect, useState } from "react";
@@ -21,14 +19,7 @@ import axios from "axios";
 import EmptyState from "./EmptyState";
 
 const INITIAL_LIMIT = 5;
-
-/* ---------------- Gesture icon mapping ---------------- */
-const gestureIcon = {
-  LIGHT_ON: "💡",
-  LIGHT_OFF: "💡",
-  FAN_ON: "🌀",
-  FAN_OFF: "🌀",
-};
+const API_BASE = "https://echogestapp.onrender.com";
 
 function GestureTable() {
   const { controllerId } = useParams();
@@ -37,7 +28,6 @@ function GestureTable() {
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
 
-  // Date filters
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
@@ -45,23 +35,19 @@ function GestureTable() {
     try {
       setLoading(true);
 
-      let url = `https://echogestapp.onrender.com/api/gestures/${controllerId}`;
-
-      const params = [];
-      if (fromDate) params.push(`from=${fromDate}`);
-      if (toDate) params.push(`to=${toDate}`);
-      if (params.length) url += "?" + params.join("&");
-
-      const res = await axios.get(url);
-
-      // latest first
-      const sorted = res.data.sort(
-        (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+      const res = await axios.get(
+        `${API_BASE}/api/gestures/${controllerId}`,
+        {
+          params: {
+            from: fromDate || undefined,
+            to: toDate || undefined,
+          },
+        }
       );
 
-      setGestures(sorted);
-    } catch (err) {
-      console.error("Error fetching gestures:", err);
+      setGestures(res.data);
+    } catch (error) {
+      console.error("Gesture fetch failed:", error);
     } finally {
       setLoading(false);
     }
@@ -101,7 +87,6 @@ function GestureTable() {
 
   return (
     <>
-      {/* Filter bar */}
       <FilterBar
         fromDate={fromDate}
         toDate={toDate}
@@ -115,7 +100,7 @@ function GestureTable() {
           <TableHead>
             <TableRow>
               <TableCell><strong>Gesture</strong></TableCell>
-              <TableCell><strong>Confidence</strong></TableCell>
+              <TableCell align="center"><strong>Confidence</strong></TableCell>
               <TableCell align="right"><strong>Time</strong></TableCell>
             </TableRow>
           </TableHead>
@@ -123,26 +108,12 @@ function GestureTable() {
           <TableBody>
             {visibleGestures.map((g) => (
               <TableRow key={g._id} hover>
-                <TableCell>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography>
-                      {gestureIcon[g.gesture] || "✋"}
-                    </Typography>
-                    <Typography>{g.gesture}</Typography>
-                  </Stack>
+                <TableCell>{g.gesture}</TableCell>
+                <TableCell align="center">
+                  {g.confidence !== null
+                    ? `${(g.confidence * 100).toFixed(0)}%`
+                    : "—"}
                 </TableCell>
-
-                <TableCell sx={{ minWidth: 160 }}>
-                  <Typography variant="body2">
-                    {(g.confidence * 100).toFixed(0)}%
-                  </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={g.confidence * 100}
-                    sx={{ height: 6, borderRadius: 4, mt: 0.5 }}
-                  />
-                </TableCell>
-
                 <TableCell align="right">
                   {new Date(g.timestamp).toLocaleString()}
                 </TableCell>
@@ -173,11 +144,7 @@ function FilterBar({
   onApply,
 }) {
   return (
-    <Stack
-      direction={{ xs: "column", sm: "row" }}
-      spacing={2}
-      sx={{ mb: 2 }}
-    >
+    <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 2 }}>
       <TextField
         label="From"
         type="datetime-local"
@@ -204,6 +171,7 @@ function FilterBar({
 }
 
 export default GestureTable;
+
 
 
 
