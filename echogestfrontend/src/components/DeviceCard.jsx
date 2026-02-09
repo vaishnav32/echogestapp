@@ -14,7 +14,8 @@ import axios from "axios";
 ========================================= */
 
 const API_BASE = "https://echogestapp.onrender.com";
-const DEVICE_ID = "ESP-01"; // single ESP32 for demo
+const DEVICE_ID = "ESP-01";
+const CONTROLLER_ID = "RP-AX92"; // later derive from route
 
 /* =========================================
    COMPONENT
@@ -23,19 +24,20 @@ const DEVICE_ID = "ESP-01"; // single ESP32 for demo
 function DeviceCard({ onNotify }) {
   const sendCommand = async (appliance, action) => {
     try {
-      await axios.post(`${API_BASE}/api/devices/ack`, {
+      await axios.post(`${API_BASE}/api/devices/manual`, {
+        controllerId: CONTROLLER_ID,
         deviceId: DEVICE_ID,
         appliance,
-        status: action,
+        action,
       });
 
       if (onNotify) {
-        onNotify(`${appliance} ${action} command sent`);
+        onNotify(`${appliance} ${action} command queued`);
       }
     } catch (error) {
-      console.error("Command failed:", error);
+      console.error("Manual command failed:", error);
       if (onNotify) {
-        onNotify("Failed to send command");
+        onNotify("Failed to send manual command");
       }
     }
   };
@@ -48,8 +50,7 @@ function DeviceCard({ onNotify }) {
         </Typography>
 
         <Typography variant="body2" color="text.secondary" gutterBottom>
-          Manual override controls. Commands are sent to the backend and
-          executed by ESP32 when available.
+          Manual override controls. Commands are queued and executed by ESP32.
         </Typography>
 
         <Divider sx={{ my: 2 }} />
@@ -119,5 +120,6 @@ function DeviceCard({ onNotify }) {
 }
 
 export default DeviceCard;
+
 
 

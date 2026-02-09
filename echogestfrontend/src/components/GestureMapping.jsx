@@ -24,7 +24,7 @@ import axios from "axios";
 const GESTURES = [
   "FIST",
   "INDEX",
-  "VICTORY",
+  "Victory",
   "THUMBS_UP",
   "OPEN_HAND",
 ];
