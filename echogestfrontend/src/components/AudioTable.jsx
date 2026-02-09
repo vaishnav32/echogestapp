@@ -10,6 +10,7 @@ import {
   Box,
   TextField,
   Stack,
+  Typography,
 } from "@mui/material";
 import GraphicEqIcon from "@mui/icons-material/GraphicEq";
 import { useEffect, useState } from "react";
@@ -18,8 +19,15 @@ import axios from "axios";
 
 import EmptyState from "./EmptyState";
 
+/* ============================
+   CONFIG
+============================ */
+const API_BASE = "https://echogestapp.onrender.com";
 const INITIAL_LIMIT = 5;
 
+/* ============================
+   COMPONENT
+============================ */
 function AudioTable() {
   const { controllerId } = useParams();
 
@@ -27,25 +35,26 @@ function AudioTable() {
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
 
-  // Date filter state
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
+  /* ============================
+     FETCH AUDIO LOGS
+  ============================ */
   const fetchAudio = async () => {
     try {
       setLoading(true);
 
-      let url = `https://echogestapp.onrender.com/api/audio/${controllerId}`;
+      const res = await axios.get(
+        `${API_BASE}/api/audio/${controllerId}`,
+        {
+          params: {
+            from: fromDate || undefined,
+            to: toDate || undefined,
+          },
+        }
+      );
 
-      const params = [];
-      if (fromDate) params.push(`from=${fromDate}`);
-      if (toDate) params.push(`to=${toDate}`);
-
-      if (params.length > 0) {
-        url += "?" + params.join("&");
-      }
-
-      const res = await axios.get(url);
       setAudioEvents(res.data);
     } catch (error) {
       console.error("Error fetching audio logs:", error);
@@ -54,14 +63,28 @@ function AudioTable() {
     }
   };
 
+  /* ============================
+     INITIAL LOAD
+  ============================ */
   useEffect(() => {
     fetchAudio();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [controllerId]);
 
+  /* ============================
+     LOADING STATE
+  ============================ */
   if (loading) {
-    return <Paper sx={{ p: 3 }}>Loading audio logs…</Paper>;
+    return (
+      <Paper sx={{ p: 3 }}>
+        <Typography>Loading audio logs…</Typography>
+      </Paper>
+    );
   }
 
+  /* ============================
+     EMPTY STATE
+  ============================ */
   if (audioEvents.length === 0) {
     return (
       <>
@@ -76,16 +99,22 @@ function AudioTable() {
         <EmptyState
           icon={<GraphicEqIcon sx={{ fontSize: 40 }} />}
           title="No audio logs"
-          subtitle="No data found for the selected time range"
+          subtitle="No audio events found for the selected time range"
         />
       </>
     );
   }
 
+  /* ============================
+     LIMIT LOGIC
+  ============================ */
   const visibleAudio = showAll
     ? audioEvents
     : audioEvents.slice(0, INITIAL_LIMIT);
 
+  /* ============================
+     RENDER TABLE
+  ============================ */
   return (
     <>
       {/* Filter bar */}
@@ -101,9 +130,15 @@ function AudioTable() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell><strong>Sound</strong></TableCell>
-              <TableCell align="center"><strong>Confidence</strong></TableCell>
-              <TableCell align="right"><strong>Time</strong></TableCell>
+              <TableCell>
+                <strong>Sound</strong>
+              </TableCell>
+              <TableCell align="center">
+                <strong>Confidence</strong>
+              </TableCell>
+              <TableCell align="right">
+                <strong>Time</strong>
+              </TableCell>
             </TableRow>
           </TableHead>
 
@@ -112,7 +147,9 @@ function AudioTable() {
               <TableRow key={a._id} hover>
                 <TableCell>{a.sound}</TableCell>
                 <TableCell align="center">
-                  {(a.confidence * 100).toFixed(0)}%
+                  {a.confidence !== null
+                    ? `${(a.confidence * 100).toFixed(0)}%`
+                    : "—"}
                 </TableCell>
                 <TableCell align="right">
                   {new Date(a.timestamp).toLocaleString()}
@@ -123,6 +160,7 @@ function AudioTable() {
         </Table>
       </TableContainer>
 
+      {/* Show more / less */}
       {audioEvents.length > INITIAL_LIMIT && (
         <Box sx={{ textAlign: "center", mt: 2 }}>
           <Button size="small" onClick={() => setShowAll(!showAll)}>
@@ -134,8 +172,9 @@ function AudioTable() {
   );
 }
 
-/* ---------------- Filter Bar Component ---------------- */
-
+/* ============================
+   FILTER BAR
+============================ */
 function FilterBar({
   fromDate,
   toDate,
@@ -175,6 +214,7 @@ function FilterBar({
 }
 
 export default AudioTable;
+
 
 
 
