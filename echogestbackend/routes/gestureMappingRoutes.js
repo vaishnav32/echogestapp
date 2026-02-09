@@ -3,60 +3,104 @@ import GestureMapping from "../models/GestureMapping.js";
 
 const router = express.Router();
 
-/* ---------------- Add Mapping ---------------- */
+/* =====================================================
+   POST /api/gesture-mappings
+   Create a new gesture → appliance mapping
+===================================================== */
 router.post("/", async (req, res) => {
   try {
-    const {
-      controllerId,
-      gesture,
-      deviceId,
-      appliance,
-      action,
-    } = req.body;
+    let { controllerId, gesture, deviceId, appliance, action } = req.body;
 
     if (!controllerId || !gesture || !deviceId || !appliance || !action) {
       return res.status(400).json({
-        message: "All fields are required",
+        message:
+          "controllerId, gesture, deviceId, appliance and action are required",
       });
     }
 
-    const mapping = new GestureMapping({
+    /* =========================
+       NORMALIZE GESTURE
+    ========================= */
+    const normalizedGesture = gesture.trim().toUpperCase();
+
+    /* =========================
+       PREVENT DUPLICATES
+    ========================= */
+    const exists = await GestureMapping.findOne({
       controllerId,
-      gesture,
+      gesture: normalizedGesture,
+      deviceId,
+      appliance,
+    });
+
+    if (exists) {
+      return res.status(409).json({
+        message: "Mapping already exists for this gesture and appliance",
+      });
+    }
+
+    /* =========================
+       SAVE MAPPING
+    ========================= */
+    const mapping = await GestureMapping.create({
+      controllerId,
+      gesture: normalizedGesture,
       deviceId,
       appliance,
       action,
     });
 
-    await mapping.save();
-
-    res.status(201).json(mapping);
+    res.status(201).json({
+      message: "Gesture mapping created",
+      mapping,
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("GESTURE MAPPING POST ERROR:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
-/* ---------------- Get Mappings for Controller ---------------- */
+/* =====================================================
+   GET /api/gesture-mappings/:controllerId
+   Fetch mappings for controller
+===================================================== */
 router.get("/:controllerId", async (req, res) => {
   try {
+    const { controllerId } = req.params;
+
     const mappings = await GestureMapping.find({
-      controllerId: req.params.controllerId,
-    });
+      controllerId,
+    }).sort({ createdAt: -1 });
 
     res.json(mappings);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("GESTURE MAPPING GET ERROR:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
-/* ---------------- Delete Mapping ---------------- */
+/* =====================================================
+   DELETE /api/gesture-mappings/:id
+   Delete a mapping
+===================================================== */
 router.delete("/:id", async (req, res) => {
   try {
-    await GestureMapping.findByIdAndDelete(req.params.id);
-    res.json({ message: "Mapping deleted" });
+    const deleted = await GestureMapping.findByIdAndDelete(req.params.id);
+
+    if (!deleted) {
+      return res.status(404).json({
+        message: "Mapping not found",
+      });
+    }
+
+    res.json({
+      message: "Mapping deleted successfully",
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("GESTURE MAPPING DELETE ERROR:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
 export default router;
+

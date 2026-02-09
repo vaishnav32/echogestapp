@@ -7,10 +7,11 @@ const router = express.Router();
 
 /* =====================================================
    POST /api/gestures
+   Raspberry Pi sends gesture
 ===================================================== */
 router.post("/", async (req, res) => {
   try {
-    const { controllerId, gesture, confidence, source } = req.body;
+    let { controllerId, gesture, confidence, source } = req.body;
 
     if (!controllerId || !gesture) {
       return res.status(400).json({
@@ -18,38 +19,52 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Save gesture
+    /* =========================
+       NORMALIZE GESTURE
+    ========================= */
+    const normalizedGesture = gesture.trim().toUpperCase();
+
+    /* =========================
+       SAVE GESTURE LOG
+    ========================= */
     await Gesture.create({
       controllerId,
-      gesture,
+      gesture: normalizedGesture,
       confidence:
         typeof confidence === "number" ? confidence : null,
-      source: source || "unknown",
+      source: source || "raspberry-pi",
       timestamp: new Date(),
     });
 
-    // Find mapping
+    /* =========================
+       FIND AUTOMATION MAPPING
+    ========================= */
     const mapping = await GestureMapping.findOne({
       controllerId,
-      gesture,
+      gesture: normalizedGesture,
     });
 
     if (!mapping) {
       return res.json({
         message: "Gesture stored, but no mapping found",
+        gesture: normalizedGesture,
       });
     }
 
-    // Create command
-    await DeviceCommand.create({
+    /* =========================
+       QUEUE DEVICE COMMAND
+    ========================= */
+    const command = await DeviceCommand.create({
       controllerId,
       deviceId: mapping.deviceId,
       appliance: mapping.appliance,
       action: mapping.action,
+      executed: false,
     });
 
     res.json({
       message: "Gesture mapped and command queued",
+      commandId: command._id,
       action: {
         deviceId: mapping.deviceId,
         appliance: mapping.appliance,
@@ -64,7 +79,7 @@ router.post("/", async (req, res) => {
 
 /* =====================================================
    GET /api/gestures/:controllerId
-   (WITH DATE FILTER SUPPORT)
+   With optional date filters
 ===================================================== */
 router.get("/:controllerId", async (req, res) => {
   try {
@@ -91,6 +106,7 @@ router.get("/:controllerId", async (req, res) => {
 });
 
 export default router;
+
 
 
 
